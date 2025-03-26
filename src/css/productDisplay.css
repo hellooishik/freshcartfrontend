@@ -18,7 +18,9 @@
   color: #888;
   margin-bottom: 20px;
 }
-
+.scroll-btn.right {
+  right: -20px !important;
+}
 .product-scroll {
   display: flex;
   overflow-x: auto;
@@ -36,8 +38,8 @@
   margin: 0 !important;
 }
 .product-card {
-  min-width: 200px;
-  max-width: 200px;
+  min-width: 300px;
+  max-width: 300px;
   border-radius: 10px;
   overflow: hidden;
   background: #fff;
@@ -45,7 +47,6 @@
   padding: 10px;
   text-align: left;
   position: relative;
-  margin: 5px 15px 15px;
 }
 
 .product-img {
@@ -132,7 +133,7 @@
 }
 
 .scroll-btn.left {
-  left: 0;
+  left: -20px;
 }
 
 .scroll-btn.right {

@@ -59,8 +59,6 @@ ul {
 }
 
 li::before {
-  content: '\2714'; /* Checkmark icon */
-  color: #5cb85c;
   margin-right: 8px;
 }
 
