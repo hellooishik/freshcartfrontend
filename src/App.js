@@ -12,6 +12,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import LoggedInHomePage from "./pages/LoggedInHomePage";
 import Productapt from "./Components/productapt";
+import CategoryPage from "./pages/CategoryPage";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -48,6 +49,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/products" element={<Products />} />
         <Route path="/products/:productId" element={<Productapt />} />
+        <Route path="/category/:categoryId" element={<CategoryPage />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
         {/* Enhanced 404 Page */}

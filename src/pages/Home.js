@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../css/homepage.css';
@@ -15,6 +16,7 @@ export default function HomePage() {
   const [products, setProducts] = useState([]);
   const [user, setUser] = useState(null);
   const [selectedProductId, setSelectedProductId] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem('user')) || null;
@@ -30,6 +32,10 @@ export default function HomePage() {
   }, []);
 
   const getImageUrl = (imagePath) => `http://localhost:4000${imagePath.replace(/\\/g, '/')}`;
+
+  const handleCategoryClick = (categoryId) => {
+    navigate(`/category/${categoryId}`);
+  };
 
   if (user) {
     return <LoggedInHomePage user={user} products={products} categories={categories} />;
@@ -51,7 +57,7 @@ export default function HomePage() {
           <p className="text-center">No products available.</p>
         )}
       </div>
-      <CategorySection categories={categories} />
+      <CategorySection categories={categories} onCategoryClick={handleCategoryClick} />
       <CustomerReviews />
       <Footer />
     </div>

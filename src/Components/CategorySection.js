@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import "../css/CategorySection.css"
-import {API_URL} from "../context/config"
+import "../css/CategorySection.css";
+import { API_URL } from "../context/config";
+
 const CategorySection = () => {
   const [categories, setCategories] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -17,6 +20,10 @@ const CategorySection = () => {
     fetchCategories();
   }, []);
 
+  const handleCategoryClick = (categoryId) => {
+    navigate(`/category/${categoryId}`);
+  };
+
   return (
     <div className="container-fluid py-5">
       <h2 className="bestseller-title">Shop by categories</h2>
@@ -25,8 +32,8 @@ const CategorySection = () => {
         <div className="row g-4 justify-content-center">
           {categories.map((category) => (
             <div className="col-6 col-md-3 col-lg-2 text-center" key={category._id}>
-              <div className="category-card">
-                              <img
+              <div className="category-card" onClick={() => handleCategoryClick(category._id)}>
+                <img
                   src={`http://localhost:4000${category.image}`}
                   alt={category.name}
                   className="category-img"
