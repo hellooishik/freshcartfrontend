@@ -4,36 +4,42 @@ import axios from 'axios';
 import '../css/categoryPage.css';
 import Header from '../Components/header';
 import Footer from '../Components/footer';
+import { API_URL } from '../context/config';
 
 const CategoryPage = () => {
   const { categoryId } = useParams();
   const [products, setProducts] = useState([]);
   const [categoryName, setCategoryName] = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchCategoryData = async () => {
       try {
-        const productResponse = await axios.get(`http://localhost:4000/products?category=${categoryId}`);
-        setProducts(productResponse.data);
-
-        const categoryResponse = await axios.get(`http://localhost:4000/categories/${categoryId}`);
+        const categoryResponse = await axios.get(`${API_URL}/products/category/${categoryId}`);
         setCategoryName(categoryResponse.data.name);
+
+        const productResponse = await axios.get(`${API_URL}/products/category/${categoryId}`);
+        setProducts(productResponse.data);
       } catch (error) {
-        console.error('Error fetching products:', error);
+        console.error('Error fetching data:', error);
+        setError('Failed to load products. Please try again later.');
       }
     };
-    fetchProducts();
+
+    fetchCategoryData();
   }, [categoryId]);
 
   return (
     <div className="category-page-container">
       <Header />
       <h2>{categoryName ? `Products in ${categoryName}` : 'Products to show'}</h2>
-      {products.length > 0 ? (
+      {error ? (
+        <p className="error-message">{error}</p>
+      ) : products.length > 0 ? (
         <div className="product-grid">
           {products.map((product) => (
             <div key={product._id} className="product-card">
-              <img src={`http://localhost:4000${product.image}`} alt={product.name} />
+              <img src={`${API_URL}${product.image}`} alt={product.name} />
               <h5>{product.name}</h5>
               <p>{product.description}</p>
               <p>Price: ₹{product.price}</p>

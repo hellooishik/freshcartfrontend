@@ -26,7 +26,7 @@ const CategorySection = () => {
 
   return (
     <div className="container-fluid py-5">
-      <h2 className="bestseller-title">Shop by categories</h2>
+      <h2 className="bestseller-title">Shop by Categories</h2>
 
       {categories.length > 0 ? (
         <div className="row g-4 justify-content-center">
@@ -34,7 +34,7 @@ const CategorySection = () => {
             <div className="col-6 col-md-3 col-lg-2 text-center" key={category._id}>
               <div className="category-card" onClick={() => handleCategoryClick(category._id)}>
                 <img
-                  src={`http://localhost:4000${category.image}`}
+                  src={`${API_URL}${category.image}`}
                   alt={category.name}
                   className="category-img"
                   onError={(e) => e.target.src = '/placeholder.png'}
