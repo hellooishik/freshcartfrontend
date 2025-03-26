@@ -24,32 +24,47 @@ const ProductDisplay = ({ products, getImageUrl }) => {
     <div className="product-display-container">
       <h2 className="bestseller-title">Bestsellers</h2>
       <p className="bestseller-subtitle">Most popular products near you!</p>
+
       <button className="scroll-btn left" onClick={scrollLeft}>&lt;</button>
+      
       <div className="product-scroll" ref={scrollRef}>
         {products.map((product) => (
           <div className="product-card" key={product._id} onClick={() => handleProductClick(product._id)}>
             <img src={getImageUrl(product.image)} alt={product.name} className="product-img" />
+
+            {/* Product Info */}
             <h5 className="product-name">{product.name}</h5>
             <p className="product-description">{product.description}</p>
-            {product.variations?.map((variation, index) => (
-  <div key={index} className="product-variation">
-    <p className="variation-type">{variation.type}</p>
-    <p className="product-price">
-      ₹{variation.discountedPrice?.toFixed(2)}
-      {variation.mrp > variation.discountedPrice && (
-        <>
-          <span className="original-price"> ₹{variation.mrp.toFixed(2)}</span>
-          <span className="discount"> {(((variation.mrp - variation.discountedPrice) / variation.mrp) * 100).toFixed(2)}% off</span>
-        </>
-      )}
-    </p>
-  </div>
-))}
-            <p className="delivery-time">⚡ Today in 90 mins</p>
+            
+            {/* Product Variations */}
+            {product.variations?.[0] && (
+              <div className="product-variation">
+  <p className="variation-type">
+    {product.variations?.[0]?.type || 'Chicken Curry Cut'} | 
+    {product.variations?.[0]?.pieces || (Math.random() < 0.5 ? '7-11' : '10-14')} Pieces | 
+    Serves {product.variations?.[0]?.serves || (Math.random() < 0.5 ? '2-3' : '4')}
+  </p>
+  <p className="product-price">
+    ₹{product.price?.toFixed(2)}
+    {product.variations?.[0]?.mrp > product.price && (
+      <>
+        <span className="original-price"> ₹{product.variations[0].mrp.toFixed(2)}</span>
+        <span className="discount"> {(((product.variations[0].mrp - product.price) / product.variations[0].mrp) * 100).toFixed(2)}% off</span>
+      </>
+    )}
+  </p>
+</div>
+)}
+
+            {/* Delivery Time */}
+            <p className="delivery-time">⚡ Today in 30 mins</p>
+
+            {/* Add to Cart Button */}
             <button className="add-to-cart-btn">+</button>
           </div>
         ))}
       </div>
+
       <button className="scroll-btn right" onClick={scrollRight}>&gt;</button>
     </div>
   );
