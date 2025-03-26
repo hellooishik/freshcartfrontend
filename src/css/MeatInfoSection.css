@@ -1,0 +1,21 @@
+.section-bg {
+    background-color: #fff7f9; /* Light pink background */
+  }
+  
+  .line {
+    width: 40px;
+    height: 3px;
+    background-color: #c81054; /* Dark pink matching the image */
+    margin-bottom: 10px;
+  }
+  
+  h5 {
+    color: #000;
+  }
+  
+  p {
+    color: #555; /* Subtle grey for the text */
+    font-size: 14px;
+    line-height: 1.8;
+  }
+  

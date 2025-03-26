@@ -1,16 +1,24 @@
 import React from 'react';
+import '../css/CitiesWeServe.css'
 
 const CitiesWeServe = () => {
-  const cities = ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Miami'];
+  const cities = [
+    'Bengaluru', 'NCR', 'Hyderabad', 'Chandigarh', 'Panchkula', 
+    'Mohali', 'Mumbai', 'Pune', 'Chennai', 'Coimbatore', 
+    'Jaipur', 'Cochin', 'Vijayawada', 'Visakhapatnam', 
+    'Kolkata', 'Lucknow', 'Kanpur', 'Nagpur'
+  ];
 
   return (
     <div className="container py-5">
-      <h2 className="text-center mb-4 fw-bold">Cities We Serve</h2>
-      <ul className="text-center">
+      <h2 className="text-center mb-4 fw-bold">CITIES WE SERVE</h2>
+      <div className="d-flex flex-wrap justify-content-center">
         {cities.map((city, index) => (
-          <li key={index}>{city}</li>
+          <div key={index} className="city-pill m-2 px-4 py-2">
+            {city}
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 };
