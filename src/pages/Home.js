@@ -10,8 +10,9 @@ import Footer from '../Components/footer';
 import CustomerReviews from '../Components/CustomerReviews';
 import CategorySection from '../Components/CategorySection';
 import ProductDisplay from '../Components/productDisplay';
-import CitiesWeServe from '../Components/CitiesWeServe'
-import MeatInfoSection from '../Components/MeatInfoSection'
+import CitiesWeServe from '../Components/CitiesWeServe';
+import MeatInfoSection from '../Components/MeatInfoSection';
+
 
 export default function HomePage() {
   const [categories, setCategories] = useState([]);

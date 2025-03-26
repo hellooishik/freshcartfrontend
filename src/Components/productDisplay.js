@@ -43,30 +43,36 @@ const ProductDisplay = ({ products, getImageUrl }) => {
       <p className="bestseller-subtitle">Most popular products near you!</p>
 
       {/* Left Scroll Button */}
-      <button className="scroll-btn left" onClick={scrollLeft}>&lt;</button>
-      
+      <button className="scroll-btn left" onClick={scrollLeft} aria-label="Scroll Left">
+        &lt;
+      </button>
+
       {/* Product List */}
       <div className="product-scroll" ref={scrollRef}>
         {products.map((product) => (
           <div className="product-card" key={product._id} onClick={() => handleProductClick(product._id)}>
-            <img src={getImageUrl(product.image)} alt={product.name} className="product-img" />
-
+            <img
+              src={getImageUrl(product.image)}
+              alt={product.name || 'Product Image'}
+              className="product-img"
+              loading="lazy"
+            />
             <h5 className="product-name">{product.name}</h5>
             <p className="product-description">{product.description}</p>
-            
+
             {/* Product Variations */}
-            {product.variations?.[0] && (
+            {product?.variations?.[0] && (
               <div className="product-variation">
                 <p className="variation-type">
-                  {product.variations[0].type || 'Chicken Curry Cut'} | 
-                  {product.variations[0].pieces || '7-11'} Pieces | 
-                  Serves {product.variations[0].serves || '2-3'}
+                  {product?.variations?.[0]?.type || 'Chicken Curry Cut'} | 
+                  {product?.variations?.[0]?.pieces || '7-11'} Pieces | 
+                  Serves {product?.variations?.[0]?.serves || '2-3'}
                 </p>
                 <p className="product-price">
-                  ₹{product.price?.toFixed(2)}
-                  {product.variations[0]?.mrp > product.price && (
+                  ₹{product?.price?.toFixed(2)}
+                  {product?.variations?.[0]?.mrp > product?.price && (
                     <>
-                      <span className="original-price"> ₹{product.variations[0].mrp.toFixed(2)}</span>
+                      <span className="original-price"> ₹{product?.variations?.[0]?.mrp?.toFixed(2)}</span>
                       <span className="discount"> {(((product.variations[0].mrp - product.price) / product.variations[0].mrp) * 100).toFixed(2)}% off</span>
                     </>
                   )}
@@ -78,13 +84,15 @@ const ProductDisplay = ({ products, getImageUrl }) => {
             <p className="delivery-time">⚡ Today in 30 mins</p>
 
             {/* Add to Cart */}
-            <button className="add-to-cart-btn">+</button>
+            <button className="add-to-cart-btn" aria-label="Add to Cart">+</button>
           </div>
         ))}
       </div>
 
       {/* Right Scroll Button */}
-      <button className="scroll-btn right" onClick={scrollRight}>&gt;</button>
+      <button className="scroll-btn right" onClick={scrollRight} aria-label="Scroll Right">
+        &gt;
+      </button>
     </div>
   );
 };
