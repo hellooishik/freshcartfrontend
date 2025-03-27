@@ -9,6 +9,7 @@ const ProductDetails = () => {
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [error, setError] = useState('');
+  const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -22,6 +23,22 @@ const ProductDetails = () => {
     };
     fetchProduct();
   }, [productId]);
+
+  const handleAddToCart = async () => {
+    try {
+      const cartData = {
+        productId: productId,
+        quantity: quantity,
+        price: product?.price ?? 0,
+      };
+      await axios.post('http://localhost:4000/cart', cartData);
+      alert('Product added to cart successfully!');
+      navigate('/cart');
+    } catch (err) {
+      console.error('Error adding product to cart:', err);
+      alert('Failed to add product to cart.');
+    }
+  };
 
   if (error) {
     return <p>{error}</p>;
@@ -46,15 +63,23 @@ const ProductDetails = () => {
             <h1 className="fw-bold">{product.name}</h1>
             <p className="text-muted">{product.description}</p>
             <h3 className="text-danger">
-  ₹{product?.price ?? 0} 
-  <small className="text-muted text-decoration-line-through">₹{product?.mrp ?? 0}</small> 
-  <span className="text-success">
-    {product?.price && product?.mrp
-      ? `(${Math.round(((product.mrp - product.price) / product.mrp) * 100)}% off)`
-      : 'No Discount Available'}
-  </span>
-</h3>
-            <button className="btn btn-primary my-3" onClick={() => navigate('/cart')}>Add to Cart</button>
+              ₹{product?.price ?? 0}
+              <small className="text-muted text-decoration-line-through"> ₹{product?.mrp ?? 0}</small>
+              <span className="text-success">
+                {product?.price && product?.mrp ? `(${Math.round(((product.mrp - product.price) / product.mrp) * 100)}% off)` : 'No Discount Available'}
+              </span>
+            </h3>
+            <div className="my-3">
+              <label className="me-2">Quantity:</label>
+              <input 
+                type="number" 
+                min="1" 
+                value={quantity} 
+                onChange={(e) => setQuantity(Number(e.target.value))} 
+                className="form-control d-inline w-auto" 
+              />
+            </div>
+            <button className="btn btn-primary my-3" onClick={handleAddToCart}>Add to Cart</button>
             <p><strong>Delivery Time:</strong> 90 mins</p>
           </div>
         </div>
@@ -71,7 +96,7 @@ const ProductDetails = () => {
       </div>
       <Footer />
     </>
-  );
+  );     
 };
 
 export default ProductDetails;

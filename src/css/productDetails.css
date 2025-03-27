@@ -9,7 +9,10 @@
   width: 100%;
   border-radius: 12px;
 }
-
+.variation-option.selected {
+  background-color: #f8d7da;
+  border-color: #dc3545;
+}
 /* Product Info */
 h1 {
   font-size: 2.5rem;
