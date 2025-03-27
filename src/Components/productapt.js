@@ -38,14 +38,34 @@ const Productapt = () => {
     fetchProduct();
   }, [productId]);
 
+  const getSessionId = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/cart/session`);
+      const sessionId = response.data.sessionId;
+      localStorage.setItem('sessionId', sessionId);
+      return sessionId;
+    } catch (error) {
+      console.error('Error generating session:', error);
+      alert('Failed to create a session. Please try again.');
+      return null;
+    }
+  };
+
   const handleAddToCart = async () => {
     if (!selectedVariation) {
       alert('Please select a variation before adding to cart.');
       return;
     }
-
+  
+    let sessionId = localStorage.getItem('sessionId');
+    if (!sessionId) {
+      sessionId = await getSessionId();
+      if (!sessionId) return;
+    }
+  
     try {
       const response = await axios.post(`${API_URL}/cart/add`, {
+        sessionId,
         productId: product._id,
         variation: selectedVariation,
         quantity: 1,
@@ -55,7 +75,7 @@ const Productapt = () => {
           'Content-Type': 'application/json',
         }
       });
-
+  
       if (response.status === 200) {
         alert('Product added to cart successfully!');
       } else {

@@ -59,6 +59,7 @@ const ProductDetails = () => {
           <h1>{product?.name}</h1>
           <p>{product?.description}</p>
           <h4 className="text-primary">Base Price: ₹{product?.price ? product.price.toFixed(2) : 'N/A'}</h4>
+          the set of verteinecvec w3ill be sdda a will be set to the mian frame
 
           {/* Variations Section */}
           {product?.variations?.length > 0 ? (

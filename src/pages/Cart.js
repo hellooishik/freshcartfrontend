@@ -3,44 +3,77 @@ import Header from '../Components/header';
 import axios from 'axios';
 
 export default function Cart() {
-  const [cart, setCart] = useState({ items: [], totalPrice: 0 });
+  const [cart, setCart] = useState({ products: [], totalPrice: 0 });
+  const [productDetails, setProductDetails] = useState([]);
 
-  // Fetch cart data
   useEffect(() => {
-    const sessionId = localStorage.getItem('sessionId');
-    if (sessionId) {
-      axios.get(`http://localhost:4000/cart?sessionId=${sessionId}`)
-        .then(response => {
-          setCart(response.data);
-        })
-        .catch(error => {
-          console.error('Error fetching cart:', error);
-        });
-    }
+    const fetchCartData = async () => {
+      try {
+        const sessionId = localStorage.getItem('sessionId');
+        if (!sessionId) return;
+
+        const { data } = await axios.get(`http://localhost:4000/cart?sessionId=${sessionId}`);
+        setCart(data);
+        fetchProductDetails(data.products);
+      } catch (error) {
+        console.error('Error fetching cart:', error);
+      }
+    };
+
+    fetchCartData();
   }, []);
 
-  // Update quantity
-  const updateQuantity = (productId, variation, quantity) => {
-    const sessionId = localStorage.getItem('sessionId');
-    axios.post('http://localhost:4000/cart/add', { sessionId, productId, variation, quantity })
-      .then(response => setCart(response.data))
-      .catch(error => console.error('Error updating quantity:', error));
+  const fetchProductDetails = async (products) => {
+    try {
+      const productPromises = products.map(item => 
+        axios.get(`http://localhost:4000/products/${item.product}`)
+      );
+      const productResponses = await Promise.all(productPromises);
+
+      const detailedProducts = productResponses.map((res, index) => ({
+        ...res.data,
+        quantity: products[index].quantity,
+      }));
+
+      setProductDetails(detailedProducts);
+    } catch (error) {
+      console.error('Error fetching product details:', error);
+    }
   };
 
-  // Remove item from cart
-  const removeItem = (productId) => {
-    const sessionId = localStorage.getItem('sessionId');
-    axios.delete(`http://localhost:4000/cart/remove/${productId}`, { data: { sessionId } })
-      .then(response => setCart(response.data.cart))
-      .catch(error => console.error('Error removing item:', error));
+  const updateQuantity = async (productId, quantity) => {
+    if (quantity < 1) return;
+
+    try {
+      const sessionId = localStorage.getItem('sessionId');
+      const { data } = await axios.post('http://localhost:4000/cart/add', { sessionId, productId, quantity });
+      setCart(data);
+      fetchProductDetails(data.products);
+    } catch (error) {
+      console.error('Error updating quantity:', error);
+    }
   };
 
-  // Clear cart
-  const clearCart = () => {
-    const sessionId = localStorage.getItem('sessionId');
-    axios.delete('http://localhost:4000/cart/clear', { data: { sessionId } })
-      .then(() => setCart({ items: [], totalPrice: 0 }))
-      .catch(error => console.error('Error clearing cart:', error));
+  const removeItem = async (productId) => {
+    try {
+      const sessionId = localStorage.getItem('sessionId');
+      const { data } = await axios.delete(`http://localhost:4000/cart/remove/${productId}`, { data: { sessionId } });
+      setCart(data);
+      setProductDetails(prev => prev.filter(item => item._id !== productId));
+    } catch (error) {
+      console.error('Error removing item:', error);
+    }
+  };
+
+  const clearCart = async () => {
+    try {
+      const sessionId = localStorage.getItem('sessionId');
+      await axios.delete('http://localhost:4000/cart/clear', { data: { sessionId } });
+      setCart({ products: [], totalPrice: 0 });
+      setProductDetails([]);
+    } catch (error) {
+      console.error('Error clearing cart:', error);
+    }
   };
 
   return (
@@ -48,22 +81,24 @@ export default function Cart() {
       <Header />
       <div className="container mx-auto p-6">
         <h1 className="text-2xl font-bold mb-4">Shopping Cart</h1>
-        {cart.items.length === 0 ? (
+        {productDetails.length === 0 ? (
           <p>Your cart is currently empty.</p>
         ) : (
           <div>
             <ul>
-              {cart.items.map(item => (
-                <li key={item._id} className="flex justify-between items-center mb-4">
-                  <div>
-                    <p>Product: {item.productId}</p>
-                    <p>Variation: {item.variation}</p>
-                    <p>Price: ₹{item.price}</p>
-                    <p>Quantity: {item.quantity}</p>
-                    <button className="bg-blue-500 text-white p-2 rounded mr-2" onClick={() => updateQuantity(item.productId, item.variation, item.quantity + 1)}>+</button>
-                    <button className="bg-blue-500 text-white p-2 rounded" onClick={() => updateQuantity(item.productId, item.variation, item.quantity - 1)}>-</button>
-                    <button className="bg-red-500 text-white p-2 rounded ml-2" onClick={() => removeItem(item.productId)}>Remove</button>
+              {productDetails.map(item => (
+                <li key={item._id} className="flex items-center justify-between border-b py-4">
+                  <img src={item.image} alt={item.name} className="w-24 h-24 object-cover rounded-lg" />
+                  <div className="flex-1 px-4">
+                    <h2 className="text-lg font-semibold">{item.name}</h2>
+                    <p className="text-gray-500">Price: ₹{item.price}</p>
                   </div>
+                  <div className="flex items-center">
+                    <button className="bg-blue-500 text-white px-3 py-1 rounded mr-2" onClick={() => updateQuantity(item._id, item.quantity + 1)}>+</button>
+                    <span className="mx-2">{item.quantity}</span>
+                    <button className="bg-blue-500 text-white px-3 py-1 rounded" onClick={() => updateQuantity(item._id, item.quantity - 1)}>-</button>
+                  </div>
+                  <button className="bg-red-500 text-white px-3 py-1 rounded ml-4" onClick={() => removeItem(item._id)}>Remove</button>
                 </li>
               ))}
             </ul>
