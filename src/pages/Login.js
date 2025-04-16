@@ -1,82 +1,95 @@
 import { useState } from "react";
 import axios from "axios";
+import Header from "../Components/header";
+import Footer from "../Components/footer";
+import CitiesWeServe from "../Components/CitiesWeServe";
+import MeatInfoSection from "../Components/MeatInfoSection";
+import { API_URL } from "../context/config";
+import "../css/Login.css";
 
 export default function Login({ setUser }) {
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [otp, setOtp] = useState("");
-  const [step, setStep] = useState(1); // Step 1: Phone input, Step 2: OTP input
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ✅ Send OTP
-  const handleSendOtp = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
     try {
-      await axios.post("http://localhost:5000/auth/send-otp", { phoneNumber });
-      setStep(2); // Proceed to OTP Verification
-    } catch (error) {
-      setError(error.response?.data?.msg || "Failed to send OTP. Try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ✅ Verify OTP
-  const handleVerifyOtp = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-
-    try {
-      const response = await axios.post("http://localhost:5000/auth/verify-otp", { phoneNumber, otp });
+      const response = await axios.post(`${API_URL}/auth/login`, {
+        email,
+        password,
+      });
 
       if (response.data.token) {
-        localStorage.setItem("token", response.data.token); // Store Token
-        setUser(response.data.user); // Set User
+        localStorage.setItem("token", response.data.token);
+        setUser(response.data.user);
         alert("Login successful!");
       }
     } catch (error) {
-      setError(error.response?.data?.msg || "OTP Verification Failed. Try again.");
+      setError(error.response?.data?.msg || "Login failed. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="login-container">
-      <h2>{step === 1 ? "Login with OTP" : "Enter Your OTP"}</h2>
-      {error && <p className="error">{error}</p>}
+    <>
+      <Header />
 
-      {step === 1 ? (
-        <form onSubmit={handleSendOtp}>
-          <input
-            type="tel"
-            placeholder="Enter Phone Number"
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
-            required
-          />
-          <button type="submit" disabled={loading}>{loading ? "Sending OTP..." : "Send OTP"}</button>
-        </form>
-      ) : (
-        <form onSubmit={handleVerifyOtp}>
-          <input
-            type="text"
-            placeholder="Enter OTP"
-            value={otp}
-            onChange={(e) => setOtp(e.target.value)}
-            required
-          />
-          <button type="submit" disabled={loading}>{loading ? "Verifying..." : "Verify OTP"}</button>
-        </form>
-      )}
+      <div className="login-page">
+        <div className="login-wrapper">
+          <div className="login-card">
+            <h2>Login to Your Account</h2>
+            <p className="subtext">Get access to the freshest meat in your city</p>
 
-      {step === 2 && (
-        <button onClick={() => setStep(1)}>Back to Phone Number</button>
-      )}
-    </div>
+            {error && <div className="error">{error}</div>}
+
+            <form onSubmit={handleLogin} className="login-form">
+              <input
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+
+              <input
+                type="password"
+                placeholder="Enter password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+
+              <button type="submit" disabled={loading}>
+                {loading ? "Logging in..." : "Login"}
+              </button>
+            </form>
+
+            <div className="footer-actions">
+              <button className="link-button" onClick={() => alert("Coming soon!")}>
+                Forgot Password?
+              </button>
+              <span>•</span>
+              <button className="link-button" onClick={() => alert("Redirecting to Signup...")}>
+                Create Account
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="extras">
+   
+          <CitiesWeServe />
+          <MeatInfoSection />
+        </div>
+      </div>
+
+      <Footer />
+    </>
   );
 }

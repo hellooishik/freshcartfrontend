@@ -1,10 +1,20 @@
 import React, { useEffect, useState } from "react";
 import Header from '../Components/header';
 import axios from 'axios';
+import CartSidebar from "../Components/CartSidebar";
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function Cart() {
   const [cart, setCart] = useState({ products: [], totalPrice: 0 });
-  const [productDetails, setProductDetails] = useState([]);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const API_URL = process.env.NODE_ENV === 'development'
+    ? 'http://localhost:4000'
+    : process.env.REACT_APP_API_URL_PROD;
+
+  const openSidebar = () => setIsSidebarOpen(true);
+  const closeSidebar = () => setIsSidebarOpen(false);
 
   useEffect(() => {
     const fetchCartData = async () => {
@@ -12,9 +22,15 @@ export default function Cart() {
         const sessionId = localStorage.getItem('sessionId');
         if (!sessionId) return;
 
-        const { data } = await axios.get(`http://localhost:4000/cart?sessionId=${sessionId}`);
-        setCart(data);
-        fetchProductDetails(data.products);
+        const { data } = await axios.get(`${API_URL}/cart?sessionId=${sessionId}`);
+        const products = data.products || [];
+
+        setCart({
+          products,
+          totalPrice: data.totalPrice || products.reduce((acc, item) => acc + item.price * item.quantity, 0),
+        });
+
+        openSidebar();
       } catch (error) {
         console.error('Error fetching cart:', error);
       }
@@ -23,90 +39,173 @@ export default function Cart() {
     fetchCartData();
   }, []);
 
-  const fetchProductDetails = async (products) => {
-    try {
-      const productPromises = products.map(item => 
-        axios.get(`http://localhost:4000/products/${item.product}`)
-      );
-      const productResponses = await Promise.all(productPromises);
-
-      const detailedProducts = productResponses.map((res, index) => ({
-        ...res.data,
-        quantity: products[index].quantity,
-      }));
-
-      setProductDetails(detailedProducts);
-    } catch (error) {
-      console.error('Error fetching product details:', error);
-    }
-  };
-
-  const updateQuantity = async (productId, quantity) => {
+  const updateQuantity = async (productId, quantity, variation) => {
     if (quantity < 1) return;
 
     try {
       const sessionId = localStorage.getItem('sessionId');
-      const { data } = await axios.post('http://localhost:4000/cart/add', { sessionId, productId, quantity });
-      setCart(data);
-      fetchProductDetails(data.products);
+      const { data } = await axios.post(`${API_URL}/cart/add`, {
+        sessionId,
+        productId,
+        quantity,
+        variation
+      });
+
+      const products = data.products || [];
+
+      setCart({
+        products,
+        totalPrice: data.totalPrice || products.reduce((acc, item) => acc + item.price * item.quantity, 0),
+      });
+
+      toast.success("Cart updated");
+      openSidebar();
     } catch (error) {
-      console.error('Error updating quantity:', error);
+      toast.error("Failed to update cart");
     }
   };
 
   const removeItem = async (productId) => {
     try {
       const sessionId = localStorage.getItem('sessionId');
-      const { data } = await axios.delete(`http://localhost:4000/cart/remove/${productId}`, { data: { sessionId } });
-      setCart(data);
-      setProductDetails(prev => prev.filter(item => item._id !== productId));
+      const { data } = await axios.delete(`${API_URL}/cart/remove/${productId}`, {
+        data: { sessionId },
+      });
+
+      const products = data.cart?.products || [];
+
+      setCart({
+        products,
+        totalPrice: data.cart?.totalPrice || products.reduce((acc, item) => acc + item.price * item.quantity, 0),
+      });
     } catch (error) {
-      console.error('Error removing item:', error);
+      toast.error("Failed to remove item");
     }
   };
 
   const clearCart = async () => {
     try {
       const sessionId = localStorage.getItem('sessionId');
-      await axios.delete('http://localhost:4000/cart/clear', { data: { sessionId } });
+      await axios.delete(`${API_URL}/cart/clear`, {
+        data: { sessionId },
+      });
       setCart({ products: [], totalPrice: 0 });
-      setProductDetails([]);
     } catch (error) {
-      console.error('Error clearing cart:', error);
+      toast.error("Failed to clear cart");
     }
+  };
+
+  const containerStyle = {
+    padding: '20px',
+    maxWidth: '1000px',
+    margin: '0 auto',
+  };
+
+  const responsiveStyle = {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px',
   };
 
   return (
     <div>
+      <ToastContainer position="top-right" autoClose={1500} />
       <Header />
-      <div className="container mx-auto p-6">
-        <h1 className="text-2xl font-bold mb-4">Shopping Cart</h1>
-        {productDetails.length === 0 ? (
+      <div style={containerStyle}>
+        <h1 style={{ fontSize: "26px", fontWeight: "bold", marginBottom: "24px" }}>Shopping Cart</h1>
+
+        {cart.products.length === 0 ? (
           <p>Your cart is currently empty.</p>
         ) : (
-          <div>
-            <ul>
-              {productDetails.map(item => (
-                <li key={item._id} className="flex items-center justify-between border-b py-4">
-                  <img src={item.image} alt={item.name} className="w-24 h-24 object-cover rounded-lg" />
-                  <div className="flex-1 px-4">
-                    <h2 className="text-lg font-semibold">{item.name}</h2>
-                    <p className="text-gray-500">Price: ₹{item.price}</p>
+          <div style={responsiveStyle}>
+            {cart.products.map((item, index) => {
+              const product = item.productId;
+              if (!product) return null;
+
+              const imageUrl = product.image?.startsWith("http") ? product.image : `${API_URL}${product.image}`;
+
+              return (
+                <div key={index} style={{
+                  display: 'flex', flexDirection: 'column', border: '1px solid #e5e7eb', borderRadius: '12px',
+                  padding: '16px', background: '#fff', boxShadow: '0 2px 6px rgba(0,0,0,0.05)'
+                }}>
+                  <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <img src={imageUrl} alt={product.name} style={{ width: '96px', height: '96px', borderRadius: '8px', objectFit: 'cover' }} />
+                    <div style={{ flex: 1 }}>
+                      <h2 style={{ margin: 0, fontSize: '18px' }}>{product.name}</h2>
+                      <p style={{ margin: '4px 0' }}>₹{item.price}</p>
+                      {item.variation && (
+                        <p style={{ fontSize: '13px', color: '#9ca3af' }}>Variation: {item.variation}</p>
+                      )}
+                      <label style={{ fontSize: '14px', marginTop: '8px' }}>Qty:
+                        <select
+                          value={item.quantity}
+                          onChange={(e) => updateQuantity(product._id, parseInt(e.target.value), item.variation)}
+                          style={{ marginLeft: '8px', padding: '4px 6px' }}
+                        >
+                          {[...Array(10).keys()].map(n => (
+                            <option key={n + 1} value={n + 1}>{n + 1}</option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                    <button
+                      onClick={() => removeItem(product._id)}
+                      style={{ background: '#ef4444', color: 'white', padding: '6px 12px', border: 'none', borderRadius: '6px' }}
+                    >
+                      Remove
+                    </button>
                   </div>
-                  <div className="flex items-center">
-                    <button className="bg-blue-500 text-white px-3 py-1 rounded mr-2" onClick={() => updateQuantity(item._id, item.quantity + 1)}>+</button>
-                    <span className="mx-2">{item.quantity}</span>
-                    <button className="bg-blue-500 text-white px-3 py-1 rounded" onClick={() => updateQuantity(item._id, item.quantity - 1)}>-</button>
-                  </div>
-                  <button className="bg-red-500 text-white px-3 py-1 rounded ml-4" onClick={() => removeItem(item._id)}>Remove</button>
-                </li>
-              ))}
-            </ul>
-            <p className="text-lg font-bold mt-6">Total Price: ₹{cart.totalPrice}</p>
-            <button className="bg-red-500 text-white p-3 rounded mt-4" onClick={clearCart}>Clear Cart</button>
+                </div>
+              );
+            })}
+
+            <div style={{ marginTop: '24px' }}>
+              <p style={{ fontSize: '18px', fontWeight: 'bold' }}>Total Price: ₹{cart.totalPrice}</p>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                <button
+                  onClick={clearCart}
+                  style={{ background: '#ef4444', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '6px' }}
+                >
+                  Clear Cart
+                </button>
+                <button
+                  onClick={() => toast.success("Proceeding to checkout...")}
+                  style={{ background: '#22c55e', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '6px' }}
+                >
+                  Checkout
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
+
+      <CartSidebar
+        isOpen={isSidebarOpen}
+        onClose={closeSidebar}
+        cartItems={cart.products
+          .filter(item => item.productId)
+          .map(item => ({
+            name: item.productId.name,
+            price: item.price,
+            quantity: item.quantity
+          }))}
+        style={{
+          position: 'fixed',
+          top: 0,
+          right: 0,
+          height: '100vh',
+          width: '360px',
+          maxWidth: '100%',
+          backgroundColor: '#fff',
+          boxShadow: '-4px 0 12px rgba(0,0,0,0.1)',
+          padding: '20px',
+          transition: 'transform 0.3s ease-in-out',
+          transform: isSidebarOpen ? 'translateX(0)' : 'translateX(100%)',
+          zIndex: 1000,
+        }}
+      />
     </div>
   );
 }

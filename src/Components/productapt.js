@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 import '../css/productDetails.css';
 import Header from '../Components/header';
 import Footer from '../Components/footer';
@@ -11,6 +14,8 @@ const API_URL = process.env.NODE_ENV === 'development'
 
 const Productapt = () => {
   const { productId } = useParams();
+  const navigate = useNavigate();
+
   const [product, setProduct] = useState(null);
   const [similarProducts, setSimilarProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -46,44 +51,48 @@ const Productapt = () => {
       return sessionId;
     } catch (error) {
       console.error('Error generating session:', error);
-      alert('Failed to create a session. Please try again.');
+      toast.error('Failed to create session. Try again.');
       return null;
     }
   };
 
-  const handleAddToCart = async () => {
-    if (!selectedVariation) {
-      alert('Please select a variation before adding to cart.');
+  const handleAddToCart = async (targetProduct, variationId = null) => {
+    const selectedVar = variationId || selectedVariation;
+
+    if (!selectedVar && targetProduct.variations?.length > 0) {
+      toast.warning('Please select a variation before adding to cart.');
       return;
     }
-  
+
     let sessionId = localStorage.getItem('sessionId');
     if (!sessionId) {
       sessionId = await getSessionId();
       if (!sessionId) return;
     }
-  
+
+    const variationObj = targetProduct.variations?.find(v => v._id === selectedVar);
+    const price = variationObj?.price || targetProduct.price;
+
     try {
       const response = await axios.post(`${API_URL}/cart/add`, {
         sessionId,
-        productId: product._id,
-        variation: selectedVariation,
+        productId: targetProduct._id,
+        variation: selectedVar,
         quantity: 1,
-        price: product.variations.find(v => v._id === selectedVariation)?.price || product.price,
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-        }
+        price
       });
-  
+
       if (response.status === 200) {
-        alert('Product added to cart successfully!');
+        toast.success(`${targetProduct.name} added to cart!`);
+        setTimeout(() => {
+          navigate('/cart'); // 👈 Redirect to cart after toast
+        }, 1500);
       } else {
-        alert('Failed to add product to cart. Please try again.');
+        toast.error('Failed to add product to cart. Please try again.');
       }
     } catch (err) {
       console.error('Failed to add product to cart:', err?.response?.data?.message || err.message);
-      alert('Error: ' + (err?.response?.data?.message || 'Unable to add product.'));
+      toast.error('Unable to add product to cart.');
     }
   };
 
@@ -95,6 +104,7 @@ const Productapt = () => {
   return (
     <>
       <Header />
+      <ToastContainer position="top-right" autoClose={1500} hideProgressBar theme="colored" />
       <div className="container my-5">
         <div className="row">
           <div className="col-md-6">
@@ -116,38 +126,55 @@ const Productapt = () => {
                     checked={selectedVariation === variation._id}
                     onChange={() => setSelectedVariation(variation._id)}
                   />
-                  <span>{variation.type} - ₹{discountedPrice.toFixed(2)} {variation.discount > 0 && <span className="text-danger">(Save {variation.discount}%)</span>}</span>
+                  <span className="ms-2">
+                    {variation.type} - ₹{discountedPrice.toFixed(2)}
+                    {variation.discount > 0 && (
+                      <span className="text-danger ms-1">(Save {variation.discount}%)</span>
+                    )}
+                  </span>
                 </div>
               );
             })}
 
-            <button className="btn btn-danger mt-3" onClick={handleAddToCart}>Add to Cart</button>
+            <button className="btn btn-danger mt-3" onClick={() => handleAddToCart(product)}>Add to Cart</button>
             <p className="text-success mt-3">Delivery in 1200 mins</p>
           </div>
         </div>
 
+        {/* Similar Products Section */}
         <h3 className="mt-5">You may also like</h3>
         <div className="row">
           {similarProducts?.length > 0 ? (
-            similarProducts.slice(0, 4).map((similar) => (
-              <div key={similar._id} className="col-md-3 mb-4">
-                <div className="card">
-                  <img src={`${API_URL}${similar.image}`} alt={similar.name} className="card-img-top" />
-                  <div className="card-body">
-                    <h5 className="card-title">{similar.name}</h5>
-                    <p className="text-success">₹{similar.variations?.[0]?.discountedPrice || similar.price}</p>
-                    <button className="btn btn-primary" onClick={() => setSelectedVariation(similar.variations?.[0]?._id)}>Add to Cart</button>
+            similarProducts.slice(0, 4).map((similar) => {
+              const variation = similar.variations?.[0];
+              const discountedPrice = variation
+                ? variation.price - (variation.price * (variation.discount / 100))
+                : similar.price;
+
+              return (
+                <div key={similar._id} className="col-md-3 mb-4">
+                  <div className="card">
+                    <img src={`${API_URL}${similar.image}`} alt={similar.name} className="card-img-top" />
+                    <div className="card-body">
+                      <h5 className="card-title">{similar.name}</h5>
+                      <p className="text-success">₹{discountedPrice.toFixed(2)}</p>
+                      <button
+                        className="btn btn-primary"
+                        onClick={() => handleAddToCart(similar, variation?._id)}
+                      >
+                        Add to Cart
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           ) : (
             <p>No similar products found.</p>
           )}
         </div>
-
-        <Footer />
       </div>
+      <Footer />
     </>
   );
 };

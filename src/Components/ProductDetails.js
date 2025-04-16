@@ -39,8 +39,35 @@ const ProductDetails = () => {
     return (price - (price * (discount / 100))).toFixed(2);
   };
 
-  const handleAddToCart = (product) => {
-    console.log('Added to cart:', product.name);
+  const handleAddToCart = async (product, selectedVariation = null) => {
+    try {
+      // Step 1: Get or Create sessionId
+      let sessionId = localStorage.getItem('sessionId');
+      if (!sessionId) {
+        const res = await axios.get(`${API_URL}/cart/session`);
+        sessionId = res.data.sessionId;
+        localStorage.setItem('sessionId', sessionId);
+      }
+
+      // Step 2: Set quantity and variation
+      const quantity = 1;
+      const variation = selectedVariation ? selectedVariation.type : null;
+      const price = selectedVariation ? selectedVariation.price : product.price;
+
+      // Step 3: Send to backend
+      await axios.post(`${API_URL}/cart/add`, {
+        sessionId,
+        productId: product._id,
+        quantity,
+        variation,
+        price,
+      });
+
+      alert(`${product.name} added to cart!`);
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      alert('Failed to add product to cart');
+    }
   };
 
   if (loading) return <div>Loading...</div>;
@@ -49,36 +76,32 @@ const ProductDetails = () => {
   return (
     <div className="container my-5">
       <div className="row">
-        {/* Product Image */}
         <div className="col-md-6">
           <img src={`${API_URL}${product?.image}`} alt={product?.name} className="img-fluid rounded shadow" />
         </div>
 
-        {/* Product Details */}
         <div className="col-md-6">
           <h1>{product?.name}</h1>
           <p>{product?.description}</p>
           <h4 className="text-primary">Base Price: ₹{product?.price ? product.price.toFixed(2) : 'N/A'}</h4>
-          the set of verteinecvec w3ill be sdda a will be set to the mian frame
 
           {/* Variations Section */}
           {product?.variations?.length > 0 ? (
             <div>
               <h5>Available Variations</h5>
               {product.variations.map((variation) => (
-                <div key={variation._id} className="variation-option my-2 p-2 border rounded">
+                <div key={variation._id} className="variation-option my-2 p-2 border rounded d-flex justify-content-between align-items-center">
                   <span>{variation.type} - ₹{calculateDiscountedPrice(variation.price, variation.discount)}</span>
                   {variation.discount > 0 && (
                     <span className="text-danger"> (Save {variation.discount}%)</span>
                   )}
+                  <button className="btn btn-sm btn-success ml-3" onClick={() => handleAddToCart(product, variation)}>Add to Cart</button>
                 </div>
               ))}
             </div>
           ) : (
-            <p>No variations available.</p>
+            <button className="btn btn-danger mt-3" onClick={() => handleAddToCart(product)}>Add to Cart</button>
           )}
-
-          <button className="btn btn-danger mt-3" onClick={() => handleAddToCart(product)}>Add to Cart</button>
         </div>
       </div>
 

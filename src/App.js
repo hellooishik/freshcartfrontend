@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
-import { useNavigate } from 'react-router-dom';
+
 
 
 import { useState, useEffect } from "react";
@@ -15,6 +15,8 @@ import Register from "./pages/Register";
 import LoggedInHomePage from "./pages/LoggedInHomePage";
 import Productapt from "./Components/productapt";
 import CategoryPage from "./pages/CategoryPage";
+
+// The main function componnet will be redirected from here 
 
 function App() {
   const [user, setUser] = useState(null);
@@ -37,7 +39,7 @@ function App() {
     };
     fetchUser();
   }, []);
-
+ 
   if (loading) return <div>Loading...</div>;
 
   return (
